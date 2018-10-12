@@ -146,9 +146,3 @@ TODO
 
 ## References & Acknowledgements
 TODO
-
-## Training
-
-## Results
-
-## References & Acknowledgements
