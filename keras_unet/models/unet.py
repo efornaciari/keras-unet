@@ -1,7 +1,9 @@
 from keras.models import Model
 
 from keras_unet.layers.blocks import build_encoder_block, build_decoder_block, build_bridge_block
+
 from keras.layers import Conv2D
+from keras.layers.core import Lambda
 
 
 def build_model(
@@ -9,6 +11,8 @@ def build_model(
         kernel_size,
         block_sizes,
         dropout=None,
+        normalize_input=False,
+        target_classes=1,
         **kargs
 ):
     """ Creates a U-Net model
@@ -18,6 +22,8 @@ def build_model(
         kernel_size     : The size of the convolution kernel to use throughout the network.
         block_sizes     : A list of integers to specify the filters at different block depths within the model. 
         dropout         : Enables dropout if not `None`.
+        normalize_input : 
+        target_classes  : Number of target classes.
 
     Returns:
         A keras.models.Model which takes an image as input and outputs a segmentation of the input image.
@@ -27,7 +33,7 @@ def build_model(
     # block.
     block_inputs = [None for _ in range(len(block_sizes))]
 
-    encoded_input = inputs
+    encoded_input = Lambda(lambda x: x / 255)(inputs) if normalize_input else inputs
     # Iterate through each block size and construct an encoder block.
     for block_i in range(len(block_sizes)):
         block_size = block_sizes[block_i]
@@ -49,7 +55,7 @@ def build_model(
 
     # Convolve with a 1x1 kernel to yield the final output.
     # TODO: make filter a variable for different number of output classes
-    model_output = Conv2D(1, (1, 1), activation='sigmoid')(decoded_output)
+    model_output = Conv2D(target_classes, (1, 1), activation='sigmoid')(decoded_output)
 
     # Return the keras.models.Model with the provided input and the constructed output.
     return Model(inputs=[inputs], outputs=[model_output])
