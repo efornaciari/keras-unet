@@ -12,6 +12,7 @@ def build_encoder_block(
         pool_size=(2, 2),
         dropout=None,
         activation='elu',
+        dense=False,
         **kwargs
 ):
     """ Creates a encoder block.
@@ -30,12 +31,19 @@ def build_encoder_block(
     """
 
     main_output = encoded_input
+    depth_outputs = []
     # Add a convolution layer for range of block_depth
     for block_i in range(block_depth):
-        main_output = Conv2D(filters, kernel_size, activation=activation, **kwargs)(main_output)
+        block_output = Conv2D(filters, kernel_size, activation=activation, **kwargs)(main_output)
+        if dense:
+            depth_outputs.append(block_output)
+            block_output = Concatenate(axis=-1)([block_output, main_output])
         # Add dropout layers if applicable.
         if dropout and dropout > 0:
-            main_output = Dropout(dropout)(main_output)
+            block_output = Dropout(dropout)(block_output)
+        main_output = block_output
+    if dense:
+        main_output = Concatenate(axis=-1)(depth_outputs)
     side_output = MaxPooling2D(pool_size=pool_size, **kwargs)(main_output)
     return main_output, side_output
 
@@ -49,6 +57,7 @@ def build_decoder_block(
         up_conv_size=(2, 2),
         dropout=None,
         activation='elu',
+        dense=False,
         **kwargs
 ):
     """ Creates a decoder block.
@@ -72,12 +81,19 @@ def build_decoder_block(
         side_input)
     # Concatenate the output from the analogous encoder block at the same depth with the up sampled block.
     main_output = Concatenate(axis=-1)([side_input, main_input])
+    depth_outputs = []
     # Add a convolution layer for range of block_depth
     for block_i in range(block_depth):
-        main_output = Conv2D(filters, kernel_size, activation=activation, **kwargs)(main_output)
+        block_output = Conv2D(filters, kernel_size, activation=activation, **kwargs)(main_output)
+        if dense:
+            depth_outputs.append(block_output)
+            block_output = Concatenate(axis=-1)([block_output, main_output])
         # Add dropout layers if applicable.
         if dropout and dropout > 0:
-            main_output = Dropout(dropout)(main_output)
+            block_output = Dropout(dropout)(block_output)
+        main_output = block_output
+    if dense:
+        main_output = Concatenate(axis=-1)(depth_outputs)
     return main_output
 
 
