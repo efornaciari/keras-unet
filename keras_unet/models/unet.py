@@ -13,6 +13,7 @@ def build_model(
         dropout=None,
         normalize_input=False,
         target_classes=1,
+        target_activation='softmax',
         dense=False,
         **kargs
 ):
@@ -55,7 +56,7 @@ def build_model(
 
     # Convolve with a 1x1 kernel to yield the final output.
     # TODO: make filter a variable for different number of output classes
-    model_output = Conv2D(target_classes, (1, 1), activation='sigmoid')(decoded_output)
+    model_output = Conv2D(target_classes, (1, 1), activation=target_activation)(decoded_output)
 
     # Return the keras.models.Model with the provided input and the constructed output.
     return Model(inputs=[inputs], outputs=[model_output])
