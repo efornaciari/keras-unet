@@ -13,6 +13,7 @@ def build_model(
         dropout=None,
         normalize_input=False,
         target_classes=1,
+        block_depth=2,
         target_activation='softmax',
         dense=False,
         **kargs
@@ -39,7 +40,7 @@ def build_model(
     # Iterate through each block size and construct an encoder block.
     for block_i in range(len(block_sizes)):
         block_size = block_sizes[block_i]
-        block, encoded_input = build_encoder_block(block_size, kernel_size, encoded_input, dropout=dropout, dense=dense, **kargs)
+        block, encoded_input = build_encoder_block(block_size, kernel_size, encoded_input, block_depth=block_depth, dropout=dropout, dense=dense, **kargs)
         block_inputs[block_i] = block
 
     # Add the bridge blocks.
@@ -52,7 +53,7 @@ def build_model(
     for block_i in range(len(block_sizes)):
         block_size = block_sizes[block_i]
         block_input = block_inputs[block_i]
-        decoded_output = build_decoder_block(block_size, kernel_size, block_input, decoded_output, dropout=dropout, dense=dense, **kargs)
+        decoded_output = build_decoder_block(block_size, kernel_size, block_input, decoded_output, block_depth=block_depth, dropout=dropout, dense=dense, **kargs)
 
     # Convolve with a 1x1 kernel to yield the final output.
     # TODO: make filter a variable for different number of output classes
